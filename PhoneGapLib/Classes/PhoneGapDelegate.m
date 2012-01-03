@@ -391,6 +391,10 @@ BOOL gSplashScreenShown = NO;
     NSString *enableViewportScale  = [self.settings objectForKey:@"EnableViewportScale"];
     NSNumber *allowInlineMediaPlayback = [self.settings objectForKey:@"AllowInlineMediaPlayback"];
     NSNumber *mediaPlaybackRequiresUserAction = [self.settings objectForKey:@"MediaPlaybackRequiresUserAction"];
+
+    // UIWebViewBounce property - defaults to true
+    NSNumber *bouncePreference = [self.settings objectForKey:@"UIWebViewBounce"];
+    BOOL bounceAllowed = (bouncePreference==nil || [bouncePreference boolValue]);
     
     // Set the supported orientations for rotation. If number of items in the array is > 1, autorotate is supported
     viewController.supportedOrientations = supportedOrientations;
@@ -434,10 +438,22 @@ BOOL gSplashScreenShown = NO;
     self.webView.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight);
     self.webView.scalesPageToFit = [enableViewportScale boolValue];
     
+    // prevent webView from bouncing
+    // based on UIWebViewBounce key in PhoneGap.plist
+    if (!bounceAllowed) {
+        if ([ self.webView respondsToSelector:@selector(scrollView) ]) {
+            ((UIScrollView *) [self.webView scrollView]).bounces = NO;
+        } else {
+            for (id subview in self.webView.subviews)
+                if ([[subview class] isSubclassOfClass: [UIScrollView class]])
+                    ((UIScrollView *)subview).bounces = NO;
+        }
+    }
+
     viewController.webView = self.webView;
     [self.viewController.view addSubview:self.webView];
-    
-        
+
+
     /*
      * Fire up the GPS Service right away as it takes a moment for data to come back.
      */
